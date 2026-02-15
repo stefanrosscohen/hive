@@ -1,0 +1,34 @@
+app = "hive-agent-swarm"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  WORKSPACE_DIR = "/app/workspace"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false    # Always on — agents need to be available
+  auto_start_machines = true
+  min_machines_running = 1      # Keep at least 1 instance alive
+
+  [http_service.checks]
+    [http_service.checks.health]
+      interval = "30s"
+      timeout = "5s"
+      grace_period = "10s"
+      method = "GET"
+      path = "/health"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[mounts]
+  source = "hive_workspace"
+  destination = "/app/workspace"
