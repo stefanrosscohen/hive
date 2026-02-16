@@ -109,15 +109,17 @@ program
     const notifier = new Notifier();
     notifier.attach(orchestrator);
 
-    // Start Telegram bot
-    const bot = createTelegramBot(orchestrator, notifier);
-    if (bot) {
-      await startTelegramBot(bot);
-    }
-
-    // Start HTTP API
+    // Start HTTP API first (needed for health checks)
     const port = parseInt(opts.port);
     startServer(orchestrator, notifier, port);
+
+    // Start Telegram bot (non-blocking)
+    const bot = createTelegramBot(orchestrator, notifier);
+    if (bot) {
+      startTelegramBot(bot).catch((err) => {
+        console.error(`[Telegram] Bot error: ${err.message}`);
+      });
+    }
   });
 
 program
