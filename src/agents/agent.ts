@@ -7,6 +7,7 @@ import type {
   ToolResult,
   Usage,
   ToolDefinition,
+  ImageAttachment,
 } from "../providers/provider.js";
 import type { ToolRegistry } from "../tools/registry.js";
 
@@ -74,12 +75,17 @@ export class Agent extends EventEmitter<AgentEvents> {
 
   /**
    * Run the agent on a task. Returns when the agent is done or budget is exhausted.
+   * Optionally attach images to the initial message (for vision tasks).
    */
-  async run(task: string): Promise<AgentResult> {
+  async run(task: string, images?: ImageAttachment[]): Promise<AgentResult> {
     const maxTurns = this.config.maxTurns ?? 100;
 
-    // Initial user message
-    this.messages.push({ role: "user", content: task });
+    // Initial user message (with optional images)
+    const initialMessage: Message = { role: "user", content: task };
+    if (images?.length) {
+      initialMessage.images = images;
+    }
+    this.messages.push(initialMessage);
 
     try {
       while (this.turns < maxTurns && !this.aborted) {

@@ -18,9 +18,16 @@ export interface ToolResult {
   isError?: boolean;
 }
 
+export interface ImageAttachment {
+  type: "base64" | "url";
+  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  data: string; // base64 string or URL
+}
+
 export interface Message {
   role: "user" | "assistant" | "tool";
   content: string;
+  images?: ImageAttachment[];
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
 }

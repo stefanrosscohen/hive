@@ -68,7 +68,35 @@ export class AnthropicProvider extends LLMProvider {
 
     for (const msg of messages) {
       if (msg.role === "user") {
-        result.push({ role: "user", content: msg.content });
+        if (msg.images?.length) {
+          const content: Anthropic.ContentBlockParam[] = [];
+          for (const img of msg.images) {
+            if (img.type === "base64") {
+              content.push({
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: img.mediaType,
+                  data: img.data,
+                },
+              });
+            } else {
+              content.push({
+                type: "image",
+                source: {
+                  type: "url",
+                  url: img.data,
+                },
+              });
+            }
+          }
+          if (msg.content) {
+            content.push({ type: "text", text: msg.content });
+          }
+          result.push({ role: "user", content });
+        } else {
+          result.push({ role: "user", content: msg.content });
+        }
       } else if (msg.role === "assistant") {
         const content: Anthropic.ContentBlockParam[] = [];
         if (msg.content) {

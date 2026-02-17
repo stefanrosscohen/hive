@@ -5,7 +5,7 @@ import { AGENT_PRESETS, type AgentPreset } from "../agents/presets.js";
 import { BudgetManager } from "./budget.js";
 import { AnthropicProvider } from "../providers/anthropic.js";
 import { OpenAIProvider } from "../providers/openai.js";
-import type { LLMProvider } from "../providers/provider.js";
+import type { LLMProvider, ImageAttachment } from "../providers/provider.js";
 import { createToolRegistry, type ToolRegistry } from "../tools/registry.js";
 import { getProvider } from "../config/models.js";
 import { settings } from "../config/settings.js";
@@ -15,6 +15,7 @@ export interface TaskConfig {
   budget: number;
   model?: string;
   repo?: string; // owner/repo for GitHub integration
+  images?: ImageAttachment[];
 }
 
 export interface TaskEvents {
@@ -115,7 +116,8 @@ export class Orchestrator extends EventEmitter<TaskEvents> {
           model,
           tools,
           agentBudget,
-          budget
+          budget,
+          config.images
         );
         agentResults.push(result);
       } else {
@@ -238,6 +240,13 @@ export class Orchestrator extends EventEmitter<TaskEvents> {
   /**
    * Run a single agent on a subtask.
    */
+  /**
+   * Run a task with images attached. Convenience wrapper around runTask.
+   */
+  async runTaskWithImages(config: TaskConfig): Promise<TaskResult> {
+    return this.runTask(config);
+  }
+
   private async runAgent(
     taskId: string,
     preset: AgentPreset,
@@ -245,7 +254,8 @@ export class Orchestrator extends EventEmitter<TaskEvents> {
     model: string,
     tools: ToolRegistry,
     budget: number,
-    budgetManager: BudgetManager
+    budgetManager: BudgetManager,
+    images?: ImageAttachment[]
   ): Promise<AgentResult> {
     const provider = this.getProvider(model);
     const presetConfig = AGENT_PRESETS[preset];
@@ -272,7 +282,7 @@ export class Orchestrator extends EventEmitter<TaskEvents> {
 
     this.emit("agent_started", agent.id, presetConfig.name, task);
 
-    const result = await agent.run(task);
+    const result = await agent.run(task, images);
 
     this.emit("agent_done", result);
     this.activeAgents.delete(agent.id);

@@ -66,7 +66,21 @@ export class OpenAIProvider extends LLMProvider {
 
     for (const msg of messages) {
       if (msg.role === "user") {
-        result.push({ role: "user", content: msg.content });
+        if (msg.images?.length) {
+          const content: OpenAI.ChatCompletionContentPart[] = [];
+          for (const img of msg.images) {
+            const url = img.type === "base64"
+              ? `data:${img.mediaType};base64,${img.data}`
+              : img.data;
+            content.push({ type: "image_url", image_url: { url } });
+          }
+          if (msg.content) {
+            content.push({ type: "text", text: msg.content });
+          }
+          result.push({ role: "user", content });
+        } else {
+          result.push({ role: "user", content: msg.content });
+        }
       } else if (msg.role === "assistant") {
         const toolCalls = msg.toolCalls?.map((tc) => ({
           id: tc.id,

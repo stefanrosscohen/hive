@@ -105,7 +105,7 @@ export function startServer(
     res.json({ cancelled });
   });
 
-  app.listen(port, () => {
+  app.listen(port, "0.0.0.0", () => {
     console.log(`[API] HTTP server running on port ${port}`);
     console.log(`[API] Endpoints:`);
     console.log(`  POST /api/run        — Start a task (async)`);
